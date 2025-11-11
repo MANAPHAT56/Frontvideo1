@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import Hls from 'hls.js';
 // API service matching the backend
-const API_BASE = 'http://api.toteja.co/api';
+const API_BASE = 'https://api.toteja.co/api';
 
 const api = {
   getVideos: async (params = {}) => {

@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Search, Users, Video, DollarSign, Activity, Edit, Trash2, Eye, PlayCircle, CheckCircle, AlertCircle, XCircle, Filter, RefreshCw, Loader } from 'lucide-react';
 
 // API Base URL - adjust as needed
-const API_BASE = 'http://api.toteja.co/api/admin';
+const API_BASE = 'https://api.toteja.co/api/admin';
 
 const UploadModal = ({ isOpen, onClose, onUpload, Videoja }) => {
   const [formData, setFormData] = useState({

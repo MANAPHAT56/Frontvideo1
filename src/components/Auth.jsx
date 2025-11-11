@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
     });
 
     // Configuration
-    const API_BASE_URL = 'http://api.toteja.co/api';
+    const API_BASE_URL = 'https://api.toteja.co/api';
 
     // Initialize component
     useEffect(() => {
