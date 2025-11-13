@@ -8,46 +8,55 @@ import ProductHomeSection from './components/Video.jsx';
 import Admin from './components/admin.jsx';
 import Auth from './components/Auth.jsx';
 import VideoDetails from './components/VideoDetails.jsx';
+import { AuthProvider } from './AuthProvider';
+import { ProtectedRoute } from './ProtectedRoute';
 function App() {
   return (
+    <AuthProvider>
       <Router>
-      <Toaster position="top-center" />
-      <Routes>
-        <Route path="/" element={<ProductHomeSection />} />
-
-        <Route
-          path="/admin"
-          element={
-            <ErrorBoundary>
-              <Suspense fallback={<div>กำลังโหลด...</div>}>
-                <Admin />
-              </Suspense>
-            </ErrorBoundary>
-          }
-        />
-           <Route
-          path="/login"
-          element={
-            <ErrorBoundary>
-              <Suspense fallback={<div>กำลังโหลด...</div>}>
-                <Auth />
-              </Suspense>
-            </ErrorBoundary>
-          }
-        />
+        <Toaster position="top-center" />
+        <Routes>
+          <Route path="/" element={<ProductHomeSection />} />
+          
           <Route
-          path="/videoDetails/:id"
-          element={
-            <ErrorBoundary>
-              <Suspense fallback={<div>กำลังโหลด...</div>}>
-                <VideoDetails />
-              </Suspense>
-            </ErrorBoundary>
-          }
-        />
-      </Routes>
-    </Router>
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<div>กำลังโหลด...</div>}>
+                    <Admin />
+                  </Suspense>
+                </ErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/login"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<div>กำลังโหลด...</div>}>
+                  <Auth />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+
+          <Route
+            path="/videoDetails/:id"
+            element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<div>กำลังโหลด...</div>}>
+                    <VideoDetails />
+                  </Suspense>
+                </ErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   )
 }
-
 export default App
