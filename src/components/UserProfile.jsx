@@ -1,80 +1,85 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, CreditCard, Shield, History, LogOut, Edit2, Save, X, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, CreditCard, Shield, History, LogOut, Edit2, Save, X, Eye, EyeOff, ChevronRight, Loader } from 'lucide-react';
 
 const UserProfile = () => {
+    const apiBaseUrl = 'https://api.toteja.co/';
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   
-  // Mock user data - ในการใช้งานจริงจะดึงจาก API
-  const [userData, setUserData] = useState({
-    username: 'johndoe',
-    email: 'john.doe@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    phone: '+66 81 234 5678',
-    address: '123 Bangkok Street, Sukhumvit, Bangkok 10110',
-    profileImage: null,
-    joinDate: '2024-01-15',
-    lastLogin: '2025-11-13T10:30:00',
-    role: 'user'
-  });
-
-  const [editForm, setEditForm] = useState({...userData});
+  const [userData, setUserData] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
   
-  const [paymentHistory] = useState([
-    {
-      id: '1',
-      date: '2025-11-10',
-      videoTitle: 'The Great Adventure',
-      amount: 299,
-      method: 'KPlus',
-      status: 'completed',
-      transactionId: 'TXN20251110001'
-    },
-    {
-      id: '2',
-      date: '2025-11-05',
-      videoTitle: 'Comedy Night Special',
-      amount: 199,
-      method: 'Credit Card',
-      status: 'completed',
-      transactionId: 'TXN20251105002'
-    },
-    {
-      id: '3',
-      date: '2025-10-28',
-      videoTitle: 'Documentary: Nature',
-      amount: 349,
-      method: 'Wallet',
-      status: 'completed',
-      transactionId: 'TXN20251028003'
-    }
-  ]);
-
-  const [sessions] = useState([
-    {
-      id: '1',
-      device: 'Chrome on Windows',
-      location: 'Bangkok, Thailand',
-      lastActive: '2025-11-13T10:30:00',
-      current: true
-    },
-    {
-      id: '2',
-      device: 'Safari on iPhone',
-      location: 'Bangkok, Thailand',
-      lastActive: '2025-11-12T18:45:00',
-      current: false
-    }
-  ]);
-
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Mock sessions data - ในการใช้งานจริงจะต้องมี session management
+  const [sessions] = useState([
+    {
+      id: '1',
+      device: 'Chrome on Windows',
+      location: 'Bangkok, Thailand',
+      lastActive: new Date().toISOString(),
+      current: true
+    }
+  ]);
+
+  // Fetch user profile
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(apiBaseUrl+'/api/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch profile');
+      
+      const data = await response.json();
+      setUserData(data);
+      setEditForm(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      alert('Failed to load profile data');
+    }
+  };
+
+  // Fetch purchase history
+  const fetchPurchaseHistory = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(apiBaseUrl+'/api/user/purchases', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch purchases');
+      
+      const data = await response.json();
+      setPurchaseHistory(data);
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+      alert('Failed to load purchase history');
+    }
+  };
+
+  // Load initial data
+  useEffect(() => {
+    const loadData = async () => {
+      setPageLoading(true);
+      await Promise.all([fetchProfile(), fetchPurchaseHistory()]);
+      setPageLoading(false);
+    };
+    loadData();
+  }, []);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -88,13 +93,29 @@ const UserProfile = () => {
 
   const handleSave = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUserData({...editForm});
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(apiBaseUrl+'/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editForm)
+      });
+      
+      if (!response.ok) throw new Error('Failed to update profile');
+      
+      const updatedUser = await response.json();
+      setUserData(updatedUser);
       setIsEditing(false);
-      setLoading(false);
       alert('Profile updated successfully!');
-    }, 1000);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePasswordChange = async () => {
@@ -106,13 +127,39 @@ const UserProfile = () => {
       alert('Please fill in all password fields!');
       return;
     }
+    if (passwordForm.newPassword.length < 6) {
+      alert('New password must be at least 6 characters!');
+      return;
+    }
+
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(apiBaseUrl+'/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          oldPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to change password');
+      }
+      
       alert('Password changed successfully!');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    }, 1000);
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert(error.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogoutDevice = (sessionId) => {
@@ -120,6 +167,7 @@ const UserProfile = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('th-TH', {
       year: 'numeric',
       month: 'long',
@@ -128,6 +176,7 @@ const UserProfile = () => {
   };
 
   const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('th-TH', {
       year: 'numeric',
       month: 'short',
@@ -136,6 +185,22 @@ const UserProfile = () => {
       minute: '2-digit'
     });
   };
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <Loader className="w-12 h-12 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <p className="text-white">Failed to load user data</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -168,8 +233,8 @@ const UserProfile = () => {
                   <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-4 ring-4 ring-gray-800">
                     <User className="w-12 h-12 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold text-white">{userData.firstName} {userData.lastName}</h2>
-                  <p className="text-gray-400 text-sm">@{userData.username}</p>
+                  <h2 className="text-xl font-bold text-white">{userData.email?.split('@')[0]}</h2>
+                  <p className="text-gray-400 text-sm">{userData.email}</p>
                   <span className="mt-2 px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full text-xs font-medium border border-blue-500/30">
                     {userData.role === 'admin' ? 'Administrator' : 'Member'}
                   </span>
@@ -245,7 +310,7 @@ const UserProfile = () => {
                           disabled={loading}
                           className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50"
                         >
-                          <Save className="w-4 h-4 mr-2" />
+                          {loading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                           {loading ? 'Saving...' : 'Save'}
                         </button>
                       </div>
@@ -253,90 +318,21 @@ const UserProfile = () => {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">First Name</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editForm.firstName}
-                            onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
-                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <p className="text-white text-lg">{userData.firstName}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Last Name</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editForm.lastName}
-                            onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
-                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        ) : (
-                          <p className="text-white text-lg">{userData.lastName}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Username</label>
-                      <div className="flex items-center text-white text-lg">
-                        <User className="w-5 h-5 mr-2 text-gray-400" />
-                        {userData.username}
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
                       <div className="flex items-center text-white text-lg">
                         <Mail className="w-5 h-5 mr-2 text-gray-400" />
                         {userData.email}
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Phone</label>
-                      {isEditing ? (
-                        <div className="flex items-center">
-                          <Phone className="w-5 h-5 mr-2 text-gray-400" />
-                          <input
-                            type="tel"
-                            value={editForm.phone}
-                            onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                            className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-white text-lg">
-                          <Phone className="w-5 h-5 mr-2 text-gray-400" />
-                          {userData.phone}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Address</label>
-                      {isEditing ? (
-                        <div className="flex items-start">
-                          <MapPin className="w-5 h-5 mr-2 mt-2 text-gray-400" />
-                          <textarea
-                            value={editForm.address}
-                            onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                            rows="3"
-                            className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex items-start text-white text-lg">
-                          <MapPin className="w-5 h-5 mr-2 mt-1 text-gray-400" />
-                          <span>{userData.address}</span>
-                        </div>
-                      )}
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Account Type</label>
+                      <div className="flex items-center text-white text-lg">
+                        <Shield className="w-5 h-5 mr-2 text-gray-400" />
+                        {userData.role === 'admin' ? 'Administrator' : 'Standard User'}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-700">
@@ -344,16 +340,24 @@ const UserProfile = () => {
                         <label className="block text-sm font-medium text-gray-400 mb-2">Member Since</label>
                         <div className="flex items-center text-white text-lg">
                           <Calendar className="w-5 h-5 mr-2 text-gray-400" />
-                          {formatDate(userData.joinDate)}
+                          {formatDate(userData.createdAt)}
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Last Login</label>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Last Updated</label>
                         <div className="flex items-center text-white text-lg">
                           <History className="w-5 h-5 mr-2 text-gray-400" />
-                          {formatDateTime(userData.lastLogin)}
+                          {formatDateTime(userData.updatedAt)}
                         </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-700">
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Purchased Videos</label>
+                      <div className="flex items-center text-white text-lg">
+                        <CreditCard className="w-5 h-5 mr-2 text-gray-400" />
+                        {userData.purchasedVideos?.length || 0} videos purchased
                       </div>
                     </div>
                   </div>
@@ -366,38 +370,64 @@ const UserProfile = () => {
                   <h3 className="text-2xl font-bold text-white mb-6">Payment History</h3>
                   
                   <div className="space-y-4">
-                    {paymentHistory.map((payment) => (
-                      <div key={payment.id} className="bg-gray-700/30 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-all">
+                    {purchaseHistory.map((purchase) => (
+                      <div key={purchase._id} className="bg-gray-700/30 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-all">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="text-white font-semibold mb-1">{payment.videoTitle}</h4>
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <h4 className="text-white font-semibold mb-1">
+                              {purchase.videoId?.title || 'Unknown Video'}
+                            </h4>
+                            <div className="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
                               <span className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1" />
-                                {formatDate(payment.date)}
+                                {formatDate(purchase.purchaseDate)}
                               </span>
-                              <span className="flex items-center">
-                                <CreditCard className="w-4 h-4 mr-1" />
-                                {payment.method}
+                              {purchase.paymentMethod && (
+                                <span className="flex items-center">
+                                  <CreditCard className="w-4 h-4 mr-1" />
+                                  {purchase.paymentMethod}
+                                </span>
+                              )}
+                              <span className="text-xs">
+                                Currency: {purchase.currency}
                               </span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Transaction ID: {payment.transactionId}</p>
+                            {purchase.transactionId && (
+                              <p className="text-xs text-gray-500 mt-1">Transaction ID: {purchase.transactionId}</p>
+                            )}
+                            {purchase.accessCount > 0 && (
+                              <p className="text-xs text-gray-500 mt-1">Played {purchase.accessCount} times</p>
+                            )}
+                            {purchase.lastAccessedAt && (
+                              <p className="text-xs text-gray-500">Last watched: {formatDateTime(purchase.lastAccessedAt)}</p>
+                            )}
                           </div>
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-blue-400">฿{payment.amount}</p>
-                            <span className="inline-block px-2 py-1 bg-green-600/20 text-green-400 rounded text-xs mt-1 border border-green-500/30">
-                              {payment.status}
+                          <div className="text-right ml-4">
+                            <p className="text-xl font-bold text-blue-400">฿{purchase.amount}</p>
+                            <span className={`inline-block px-2 py-1 rounded text-xs mt-1 border ${
+                              purchase.status === 'completed' ? 'bg-green-600/20 text-green-400 border-green-500/30' :
+                              purchase.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30' :
+                              purchase.status === 'failed' ? 'bg-red-600/20 text-red-400 border-red-500/30' :
+                              'bg-gray-600/20 text-gray-400 border-gray-500/30'
+                            }`}>
+                              {purchase.status}
                             </span>
+                            {purchase.expiresAt && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Expires: {formatDate(purchase.expiresAt)}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {paymentHistory.length === 0 && (
+                  {purchaseHistory.length === 0 && (
                     <div className="text-center py-12">
                       <CreditCard className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-400">No payment history yet</p>
+                      <p className="text-gray-400 text-lg">No payment history yet</p>
+                      <p className="text-gray-500 text-sm mt-2">Start purchasing videos to see your transaction history</p>
                     </div>
                   )}
                 </div>
@@ -420,6 +450,7 @@ const UserProfile = () => {
                             value={passwordForm.currentPassword}
                             onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
                             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                            placeholder="Enter current password"
                           />
                           <button
                             type="button"
@@ -438,6 +469,7 @@ const UserProfile = () => {
                           value={passwordForm.newPassword}
                           onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter new password (min 6 characters)"
                         />
                       </div>
 
@@ -448,14 +480,16 @@ const UserProfile = () => {
                           value={passwordForm.confirmPassword}
                           onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
                           className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Confirm new password"
                         />
                       </div>
 
                       <button
                         onClick={handlePasswordChange}
                         disabled={loading}
-                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50"
+                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50 flex items-center"
                       >
+                        {loading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : null}
                         {loading ? 'Updating...' : 'Update Password'}
                       </button>
                     </div>
