@@ -10,6 +10,9 @@ export const AuthProvider = ({ children }) => {
     // เรียก backend เพื่อตรวจ token / cookie
     fetch("https://api.toteja.co/api/auth/verify", {
       credentials: "include",
+        headers: {
+           'Authorization': `Bearer ${localStorage.getItem('authToken')}` 
+        }
     })
       .then(res => {
         if (res.status === 401) throw new Error("Not logged in");
