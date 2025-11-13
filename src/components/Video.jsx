@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import Hls from 'hls.js';
+import { useNavigate } from 'react-router-dom';
 // API service matching the backend
 const API_BASE = 'https://api.toteja.co/api';
 
@@ -563,6 +564,7 @@ const UploadModal = ({ isOpen, onClose, onUpload }) => {
 
 // Main App Component
 const VideoStreamingApp = () => {
+  const navigate  = useNavigate();
   const [videos, setVideos] = useState([]);
   const [purchasedVideos, setPurchasedVideos] = useState([]);
   const [currentView, setCurrentView] = useState('all'); // 'all', 'purchased'
