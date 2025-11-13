@@ -595,7 +595,9 @@ const VideoStreamingApp = () => {
       setLoading(false);
     }
   };
-
+  const GotoUserProfile =async()=> {
+    navigate('/UserProfile');
+  };
   // Load purchased videos
   const loadPurchasedVideos = async () => {
     setLoading(true);
@@ -694,6 +696,7 @@ const VideoStreamingApp = () => {
                 </button>
               )}
               <button className="flex items-center px-4 py-2 border rounded-lg hover:bg-gray-50">
+                onClick={()=GotoUserProfile()}
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </button>
