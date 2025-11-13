@@ -33,7 +33,7 @@ const UserProfile = () => {
   // Fetch user profile
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiBaseUrl+'/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -54,7 +54,7 @@ const UserProfile = () => {
   // Fetch purchase history
   const fetchPurchaseHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiBaseUrl+'/api/user/purchases', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -94,7 +94,7 @@ const UserProfile = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiBaseUrl+'/api/user/profile', {
         method: 'PUT',
         headers: {
@@ -134,7 +134,7 @@ const UserProfile = () => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiBaseUrl+'/api/user/change-password', {
         method: 'POST',
         headers: {
