@@ -88,7 +88,7 @@ import { useNavigate } from 'react-router-dom';
         
         const token = response.token;
         setAuthToken(token);
-        // localStorage.setItem('authToken', token);
+        localStorage.setItem('authToken', token);
         setCurrentUser(response.user);
         
         showAlert('login', 'Login successful!', 'success');
