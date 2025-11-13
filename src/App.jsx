@@ -10,6 +10,7 @@ import Auth from './components/Auth.jsx';
 import VideoDetails from './components/VideoDetails.jsx';
 import { AuthProvider } from './AuthProvider';
 import { ProtectedRoute } from './ProtectedRoute';
+import UserProfile from './components/UserProfile.jsx';
 function App() {
   return (
     <AuthProvider>
@@ -50,7 +51,18 @@ function App() {
               </ErrorBoundary>
             }
           />
-
+ <Route
+            path="/UserProfile"
+            element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<div>กำลังโหลด...</div>}>
+                    <UserProfile />
+                  </Suspense>
+                </ErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/videoDetails/:id"
             element={
