@@ -698,8 +698,8 @@ const VideoStreamingApp = () => {
                   Upload
                 </button>
               )}
-              <button className="flex items-center px-4 py-2 border rounded-lg hover:bg-gray-50">
-                onClick={()=>GotoUserProfile()}
+              <button className="flex items-center px-4 py-2 border rounded-lg hover:bg-gray-50"
+                              onClick={()=>GotoUserProfile()}>
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </button>
