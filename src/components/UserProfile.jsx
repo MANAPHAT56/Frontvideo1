@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, CreditCard, Shield, History, LogOut, Edit2, Save, X, Eye, EyeOff, ChevronRight, Loader } from 'lucide-react';
 
 const UserProfile = () => {
-    const apiBaseUrl = 'https://api.toteja.co/';
+    const apiBaseUrl = 'https://api.toteja.co';
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
