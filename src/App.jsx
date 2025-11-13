@@ -16,7 +16,16 @@ function App() {
       <Router>
         <Toaster position="top-center" />
         <Routes>
-          <Route path="/" element={<ProductHomeSection />} />
+          <Route path="/" element={
+            
+            <ProtectedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<div>กำลังโหลด...</div>}>
+                     <ProductHomeSection />
+                  </Suspense>
+                </ErrorBoundary>
+              </ProtectedRoute>
+        } />
           
           <Route
             path="/admin"
