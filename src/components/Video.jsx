@@ -122,9 +122,190 @@ playVideo: async (id) => {
     return response.json();
   }
 };
+const PaymentModal = ({ video, onClose, onSuccess }) => {
+  const [qrImageUrl, setQrImageUrl] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, checking, success, failed
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const createQRPayment = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const res = await fetch("/api/payment/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: video.price * 100, // Convert to cents
+          orderId: `VIDEO-${video.id}-${Date.now()}`,
+          videoId: video.id
+        })
+      });
+      
+      if (!res.ok) throw new Error('Failed to create payment');
+      
+      const data = await res.json();
+      setQrImageUrl(data.qrImageUrl);
+      setPaymentStatus('checking');
+      
+      // Simulate payment checking (replace with actual polling)
+      setTimeout(() => checkPaymentStatus(data.orderId), 2000);
+    } catch (err) {
+      setError(err.message);
+      setPaymentStatus('failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkPaymentStatus = async (orderId) => {
+    // Simulate checking payment status
+    // In real app, poll your backend API
+    setTimeout(() => {
+      setPaymentStatus('success');
+      setTimeout(() => {
+        onSuccess(video);
+      }, 1500);
+    }, 3000);
+  };
+
+  React.useEffect(() => {
+    createQRPayment();
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white relative">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="flex items-center space-x-3">
+            <div className="bg-white bg-opacity-20 p-3 rounded-full">
+              <QrCode className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">ชำระเงิน</h2>
+              <p className="text-blue-100 text-sm">สแกน QR Code เพื่อชำระเงิน</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Video Info */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{video.title}</h3>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 text-sm">ยอดชำระ</span>
+              <span className="text-2xl font-bold text-blue-600">฿{video.price.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* QR Code Section */}
+          <div className="flex flex-col items-center">
+            {loading && (
+              <div className="flex flex-col items-center py-12">
+                <Loader className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+                <p className="text-gray-600">กำลังสร้าง QR Code...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="w-full bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center text-red-800">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  <span className="font-semibold">เกิดข้อผิดพลาด</span>
+                </div>
+                <p className="text-red-600 text-sm mt-1">{error}</p>
+              </div>
+            )}
+
+            {qrImageUrl && paymentStatus === 'checking' && (
+              <div className="w-full">
+                <div className="bg-white border-4 border-blue-600 rounded-2xl p-6 mb-4 shadow-lg">
+                  <img 
+                    src={qrImageUrl} 
+                    alt="Payment QR Code" 
+                    className="w-full h-auto"
+                  />
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-center text-blue-800">
+                    <Clock className="w-5 h-5 mr-2 animate-pulse" />
+                    <span className="font-semibold">รอการชำระเงิน...</span>
+                  </div>
+                  <p className="text-blue-600 text-sm text-center mt-2">
+                    กรุณาสแกน QR Code ด้วยแอปธนาคารของคุณ
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {paymentStatus === 'success' && (
+              <div className="w-full py-8">
+                <div className="flex flex-col items-center">
+                  <div className="bg-green-100 rounded-full p-4 mb-4 animate-bounce">
+                    <CheckCircle2 className="w-16 h-16 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-green-600 mb-2">ชำระเงินสำเร็จ!</h3>
+                  <p className="text-gray-600 text-center">
+                    คุณสามารถรับชมวิดีโอได้แล้ว
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {paymentStatus === 'failed' && (
+              <div className="w-full py-8">
+                <div className="flex flex-col items-center">
+                  <div className="bg-red-100 rounded-full p-4 mb-4">
+                    <AlertCircle className="w-16 h-16 text-red-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-red-600 mb-2">ชำระเงินไม่สำเร็จ</h3>
+                  <p className="text-gray-600 text-center mb-4">
+                    กรุณาลองใหม่อีกครั้ง
+                  </p>
+                  <button
+                    onClick={createQRPayment}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    ลองใหม่
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Instructions */}
+          {qrImageUrl && paymentStatus === 'checking' && (
+            <div className="mt-6 space-y-2">
+              <p className="text-sm font-semibold text-gray-700">วิธีชำระเงิน:</p>
+              <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                <li>เปิดแอปธนาคารหรือแอป Mobile Banking</li>
+                <li>เลือกเมนูสแกน QR Code</li>
+                <li>สแกนรหัสด้านบนเพื่อชำระเงิน</li>
+                <li>ยืนยันการชำระเงิน</li>
+              </ol>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 // Video Card Component
-const VideoCard = ({ video, onPlay, onPurchase, isLoading }) => {
+const VideoCard = ({ video, onPlay, isLoading }) => {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [videoPurchased, setVideoPurchased] = useState(video.purchased || false);
+
   const formatDuration = (seconds) => {
     if (!seconds) return '';
     const mins = Math.floor(seconds / 60);
@@ -133,7 +314,17 @@ const VideoCard = ({ video, onPlay, onPurchase, isLoading }) => {
   };
 
   const formatPrice = (price) => {
-    return price === 0 ? 'Free' : `$${price.toFixed(2)}`;
+    return price === 0 ? 'ฟรี' : `฿${price.toFixed(2)}`;
+  };
+
+  const handlePurchase = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = (video) => {
+    setVideoPurchased(true);
+    setShowPaymentModal(false);
+    // You can add additional success handling here
   };
 
   const getStatusBadge = (video) => {
@@ -141,7 +332,7 @@ const VideoCard = ({ video, onPlay, onPurchase, isLoading }) => {
       return (
         <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded flex items-center">
           <Loader className="w-3 h-3 mr-1 animate-spin" />
-          Processing
+          กำลังประมวลผล
         </div>
       );
     }
@@ -149,7 +340,7 @@ const VideoCard = ({ video, onPlay, onPurchase, isLoading }) => {
       return (
         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded flex items-center">
           <AlertCircle className="w-3 h-3 mr-1" />
-          Failed
+          ล้มเหลว
         </div>
       );
     }
@@ -157,94 +348,105 @@ const VideoCard = ({ video, onPlay, onPurchase, isLoading }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-900">
+    <>
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+        {/* Thumbnail */}
+        <div className="relative aspect-video bg-gray-900">
           {video.thumbnailPath ? (
-    <img
-      src={"https://cdn.toteja.co/"+video.thumbnailPath+"original_thumb.0000000.jpg"}
-      alt={video.title || "Video thumbnail"}
-      className="absolute inset-0 w-full h-full object-cover"
-    />
-  ) : (
-    <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-      <Video className="w-16 h-16 text-gray-600" />
-    </div>
-  )}
-        {video.duration && (
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-            {formatDuration(video.duration)}
-          </div>
-        )}
-        {getStatusBadge(video)}
-      </div>
-      
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{video.title}</h3>
-        {video.description && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-3">{video.description}</p>
-        )}
-        
-        {/* Tags */}
-        {video.tags && video.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {video.tags.slice(0, 3).map((tag, index) => (
-              <span key={index} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                <Tag className="w-3 h-3 mr-1" />
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-        
-        {/* Price and Actions */}
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-lg text-green-600">
-            {formatPrice(video.price)}
-          </span>
-          
-          <div className="flex gap-2">
-            {video.uploadStatus === 'completed' && video.canPlay ? (
-              <button 
-                onClick={() => onPlay(video)}
-                disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                Play
-              </button>
-            ) : video.uploadStatus === 'completed' && !video.canPlay ? (
-              <button 
-                onClick={() => onPurchase(video)}
-                disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
-                Buy
-              </button>
-            ) : (
-              <span className="text-sm text-gray-500 px-4 py-2">
-                {video.uploadStatus === 'processing' ? 'Processing...' : 'Not Available'}
-              </span>
-            )}
-          </div>
+            <img
+              src={`https://cdn.toteja.co/${video.thumbnailPath}original_thumb.0000000.jpg`}
+              alt={video.title || "Video thumbnail"}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+              <Video className="w-16 h-16 text-gray-600" />
+            </div>
+          )}
+          {video.duration && (
+            <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+              {formatDuration(video.duration)}
+            </div>
+          )}
+          {getStatusBadge(video)}
         </div>
         
-        {/* Purchase Status */}
-        {video.purchased && (
-          <div className="mt-2 flex items-center text-green-600 text-sm">
-            <CheckCircle className="w-4 h-4 mr-1" />
-            Owned
-            {video.purchaseInfo && (
-              <span className="ml-2 text-gray-500">
-                • Purchased {new Date(video.purchaseInfo.purchaseDate).toLocaleDateString()}
-              </span>
-            )}
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="font-semibold text-lg mb-2 line-clamp-2">{video.title}</h3>
+          {video.description && (
+            <p className="text-gray-600 text-sm mb-3 line-clamp-3">{video.description}</p>
+          )}
+          
+          {/* Tags */}
+          {video.tags && video.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {video.tags.slice(0, 3).map((tag, index) => (
+                <span key={index} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  <Tag className="w-3 h-3 mr-1" />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+          
+          {/* Price and Actions */}
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-lg text-green-600">
+              {formatPrice(video.price)}
+            </span>
+            
+            <div className="flex gap-2">
+              {video.uploadStatus === 'completed' && (videoPurchased || video.canPlay) ? (
+                <button 
+                  onClick={() => onPlay(video)}
+                  disabled={isLoading}
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                  เล่น
+                </button>
+              ) : video.uploadStatus === 'completed' && !videoPurchased && !video.canPlay ? (
+                <button 
+                  onClick={handlePurchase}
+                  disabled={isLoading}
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                >
+                  {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <ShoppingCart className="w-4 h-4 mr-2" />}
+                  ซื้อ
+                </button>
+              ) : (
+                <span className="text-sm text-gray-500 px-4 py-2">
+                  {video.uploadStatus === 'processing' ? 'กำลังประมวลผล...' : 'ไม่พร้อมใช้งาน'}
+                </span>
+              )}
+            </div>
           </div>
-        )}
+          
+          {/* Purchase Status */}
+          {(videoPurchased || video.purchased) && (
+            <div className="mt-2 flex items-center text-green-600 text-sm">
+              <CheckCircle className="w-4 h-4 mr-1" />
+              เป็นเจ้าของแล้ว
+              {video.purchaseInfo && (
+                <span className="ml-2 text-gray-500">
+                  • ซื้อเมื่อ {new Date(video.purchaseInfo.purchaseDate).toLocaleDateString('th-TH')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <PaymentModal
+          video={video}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+    </>
   );
 };
 

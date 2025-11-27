@@ -17,8 +17,8 @@ function App() {
       <Router>
         <Toaster position="top-center" />
         <Routes>
-          <Route path="/" element={
-            
+          <Route path="/"
+           element={
             <ProtectedRoute>
                 <ErrorBoundary>
                   <Suspense fallback={<div>กำลังโหลด...</div>}>
