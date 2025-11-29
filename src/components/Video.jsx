@@ -13,6 +13,7 @@ import {
   DollarSign,
   CheckCircle,
   AlertCircle,
+  Qrcode,
   Loader,
   X
 } from 'lucide-react';
