@@ -221,22 +221,28 @@ const VideoAuthSystem = () => {
         const emailRef = useRef(null);
         const passwordRef = useRef(null);
 
-        useEffect(() => {
-            const focusElement = (ref) => {
-                if (ref.current) {
-                    const el = ref.current;
-                    el.focus();
-                    const length = el.value.length;
-                    el.setSelectionRange(length, length);
-                }
-            };
+       const hasFocusedRef = useRef(false);
 
-            if (currentlyFocusedField === 'email') {
-                focusElement(emailRef);
-            } else if (currentlyFocusedField === 'password') {
-                focusElement(passwordRef);
-            }
-        }, [currentlyFocusedField]);
+useEffect(() => {
+    if (hasFocusedRef.current) return;
+
+    const focusElement = (ref) => {
+        if (ref.current) {
+            const el = ref.current;
+            el.focus();
+            const length = el.value.length;
+            el.setSelectionRange(length, length);
+        }
+    };
+
+    if (currentlyFocusedField === 'email') {
+        focusElement(emailRef);
+    } else if (currentlyFocusedField === 'password') {
+        focusElement(passwordRef);
+    }
+
+    hasFocusedRef.current = true;
+}, [currentlyFocusedField]);
 
         const handleEmailChange = useCallback((e) => {
             setLoginForm(prev => ({ ...prev, email: e.target.value }));
