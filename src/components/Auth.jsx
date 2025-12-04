@@ -217,7 +217,7 @@ const VideoAuthSystem = () => {
     });
     Alert.displayName = 'Alert';
 
-    const LoginForm = memo((handleLogin) => {
+    const LoginForm = memo(() => {
         const emailRef = useRef(null);
         const passwordRef = useRef(null);
 
@@ -418,7 +418,7 @@ useEffect(() => {
                                 value={registerForm.email}
                                 onChange={handleEmailChange}
                                 onKeyDown={handleKeyDown}
-                                onFocus={() => setCurrentlyFocusedField('email')}
+                                // onFocus={() => setCurrentlyFocusedField('email')}
                                 className={`w-full p-3 border-2 rounded-xl text-base focus:outline-none transition-all duration-200 ${
                                     currentlyFocusedField === 'email' 
                                         ? 'border-indigo-500 ring-2 ring-indigo-200 shadow-lg' 
@@ -436,7 +436,7 @@ useEffect(() => {
                                 value={registerForm.password}
                                 onKeyDown={handleKeyDown}
                                 onChange={handlePasswordChange}
-                                onFocus={() => setCurrentlyFocusedField('password')}
+                                // onFocus={() => setCurrentlyFocusedField('password')}
                                 className={`w-full p-3 border-2 rounded-xl text-base focus:outline-none transition-all duration-200 ${
                                     currentlyFocusedField === 'password' 
                                         ? 'border-indigo-500 ring-2 ring-indigo-200 shadow-lg' 
